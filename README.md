@@ -1,7 +1,7 @@
 ## Controller module
 
 In my project I used:
-- Arduino Uno R3 -- <a href="http://arduino.cc/en/Main/ArduinoBoardUno">Product Link</a>
+- Arduino Uno R3 -- <a href="http://netram.co.za/1009-arduino-uno-r3.html">Product Link</a>
 - IteadStudio 3G Shield -- <a href="http://imall.iteadstudio.com/development-platform/arduino/shields/im121026002.html">Product Link</a>
 - Adafruit NFC Controller Shield -- <a href="http://www.adafruit.com/products/789">Product Link</a>
 - Thermal printer -- <a href="http://netram.co.za/1237-thermal-printer.html">Product Link</a>
