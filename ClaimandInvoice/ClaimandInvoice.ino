@@ -67,9 +67,11 @@ boolean success = 0;
 
 
 int option = 0;
-char claim_id = 0;
-char user_id = 0;
+char inputClaimId[3];
+char inputUserId [3];
+
 int user_id_int = 0;
+int claim_id_int = 0;
 int amount_payable = 0;
 
 void setup() {
@@ -208,30 +210,33 @@ void loop() {
 
 
           }
-          user_id = 0;
-          user_id = user_id | (rxNDEFRecord[2]<<4);
-          user_id = user_id | (rxNDEFRecord[3]);
-
-          claim_id = claim_id | (rxNDEFRecord[5]<<4);
-          claim_id = claim_id | (rxNDEFRecord[6]);
-
+          inputUserId[0] = rxNDEFRecord[1];
+          inputUserId[1] = rxNDEFRecord[2];
+          inputUserId[2] = '\0';
+          inputClaimId[0] = rxNDEFRecord[4];
+          inputClaimId[1] = rxNDEFRecord[5];
+          inputClaimId[2] = '\0';
+          user_id_int = atoi(inputUserId);
+          claim_id_int = atoi(inputClaimId);
+         
+          
           Serial.print(F("Raw NDEF Record : ")); 
           Serial.println(rxNDEFRecord);
           Serial.print(F("User ID: ")); 
-          Serial.print(user_id);
+          Serial.print(user_id_int);
           Serial.print(F(" | Claim ID: ")); 
-          Serial.println(claim_id);
-
+          Serial.println(claim_id_int);
+          
           if(rxNDEFRecord[0] == 'V')
           {
 
             Serial.println(F("Process started for claiming the voucher"));
-            httpResponse = doClaimHttpRequest(user_id, claim_id);
+            httpResponse = doClaimHttpRequest(user_id_int, claim_id_int);
           }
           else if(rxNDEFRecord[0] == 'T')
           {
             Serial.println(F("Process started for claiming the ticket"));
-            httpResponse = doClaimHttpRequest(user_id, claim_id);
+            httpResponse = doClaimHttpRequest(user_id_int, claim_id_int);
           }
           else if(rxNDEFRecord[0] == 'P')
           {
@@ -245,12 +250,26 @@ void loop() {
 
           if(httpResponse == 'E')
           {
+            if(rxNDEFRecord[0] == 'V') {
             Serial.println(F("The voucher has expired!"));
+            }
+            else {
+               Serial.println(F("The ticket has expired!"));
+            }
             success = true;
           }
           else if (httpResponse == 'V')
           {
+            if(rxNDEFRecord[0] == 'V') {
             Serial.println(F("The voucher is valid!"));
+            printClaim('V');
+            }
+            else
+            {
+              Serial.println(F("The ticket is valid!"));
+              printClaim('T');
+            }
+            
             success = true;
           }
           else
@@ -392,12 +411,54 @@ int serialReadInt()
 
 
 
-void printClaim()
+void printClaim(char type)
 {
-
+  Serial.print("\n");
+  Serial.println(F("\\    \\    \\    /    /     /"));
+  Serial.println(F(" \\    \\    \\  /    /     / "));
+  Serial.println(F("  \\    \\    \\/    /     /  "));
+  Serial.println(F("   \\    \\        /     /    "));
+  Serial.println(F("    \\    \\      /     /     "));
+  Serial.println(F("\\    \\    \\    /     /    /"));
+  Serial.println(F(" \\    \\    \\  /     /    / "));
+  Serial.println(F("  \\    \\    \\/     /    /  "));
+  Serial.println();
+  if(type == 'V')
+  {
+    Serial.print(F(" _______________________________"));
+    Serial.print(F("| ============================= |\n"));
+    Serial.print(F("| =          VOUCHER         =  |\n"));
+    Serial.print(F("| ============================= |\n"));
+    Serial.println();
+  }
+  else
+  {
+    Serial.print(F(" _______________________________"));
+    Serial.print(F("| ============================= |\n"));
+    Serial.print(F("| =         TICKET            = |\n"));
+    Serial.print(F("| ============================= |\n"));
+  }
+    Serial.print(F("| Claimed by: User ID "));Serial.println(user_id_int);    
+    Serial.print(F("Title : "));
+    for(int8_t i = 7; i < 17; i++) {
+      Serial.print(rxNDEFRecord[i]);
+      
+    }
+    Serial.println();
+    Serial.print (F("Valid until : "));
+    
+    Serial.print(rxNDEFRecord[26]);Serial.print(rxNDEFRecord[27]);
+    Serial.print(F("/")); 
+     Serial.print(rxNDEFRecord[23]);Serial.print(rxNDEFRecord[24]);
+    Serial.print(F("/")); 
+    Serial.print(rxNDEFRecord[18]);Serial.print(rxNDEFRecord[19]);Serial.print(rxNDEFRecord[20]);Serial.println(rxNDEFRecord[21]);
+    Serial.print(F("Amount : "));Serial.print(rxNDEFRecord[29]);Serial.print(rxNDEFRecord[30]);Serial.print(rxNDEFRecord[31]);Serial.println(rxNDEFRecord[32]);
+    Serial.print(F("============================\n"));
+    Serial.print(F("=       THANK YOU          =\n"));
+    Serial.print(F("============================\n"));
 }
 
-char doClaimHttpRequest(char user_id, char claim_id)
+char doClaimHttpRequest(int user_id, int claim_id)
 {
 
   int8_t resultAT = 0;
@@ -418,10 +479,9 @@ char doClaimHttpRequest(char user_id, char claim_id)
     free(auxString);
     Serial.println(F("Sends Request:"));
     //memset(ptrAuxString, EOS, 200);    // Initialize the string
-    int user = user_id-'0';
-    int claim = claim_id-'0';
+ 
 
-    sprintf(auxString, CLAIM_REQUEST, user, claim);
+    sprintf(auxString, CLAIM_REQUEST, user_id, claim_id);
     Serial.println(auxString);    
     gsmSerial.println(auxString);
     // Sends 
@@ -551,6 +611,7 @@ int8_t get_array_length(char *arr)
 	}
 	return k;
 }
+
 
 
 
